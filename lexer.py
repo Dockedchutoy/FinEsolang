@@ -1,3 +1,21 @@
+# Error reporting
+
+hadError = False
+hadRuntimeError = False
+
+def error(line, character, item, message):
+    report(line, character, "", message)
+
+def report(line, character, item, message):
+    global hadError
+    print(f"[{line}:{character}] Error{item}: {message}")
+    hadError = True
+
+def runtimeError(error):
+    global hadRuntimeError
+    print(f"[{error.token}] Error: {error.message}")
+    hadRuntimeError = True
+
 # Token class
 # 
 # Accepted names:
@@ -30,15 +48,15 @@ class Lexer():
     def __init__(self, source: str) -> None:
         self.keywords: list[str] = ["print", "write", "copy", "delete", "append", "goto", "if", "else", "endif", "export"]
         self.empties: list[str] = ["\t", " "]
-        self.source = source 
-        self.lines: list[list] = []
-        self.char: int = 0
-        self.charline: int = 0
-        self.line: int = 0
-        self.cur: str = ""
-        self.tokens: list[Tkn] = []
+        self.source = source            # Zdrojový kód
+        self.lines: list[list] = []     # Veškeré řádky s lexémy
+        self.char: int = 0              # Současný znak v programu
+        self.charline: int = 0          # Současný znak v řádku
+        self.line: int = 0              # Současný řádek
+        self.cur: str = ""              # Současná forma lexému
+        self.tokens: list[Tkn] = []     # Jeden současný řádek lexémů
     
-    def scan(self) -> list:
+    def scan(self) -> list[list]:
         while self.notAtEnd():
             match self.peek():
 
@@ -74,7 +92,7 @@ class Lexer():
                             self.nextchar()
                         self.tokens.append(Tkn("offset", int(self.cur)))
                     else:
-                        self.error(f"[{self.line}:{self.char}]")
+                        error(self.line, self.charline, "", f"{self.cur} must be followed by an empty character or a number.")
                 
                 case p if p.isalpha(): # statement / identifier
                     while self.notAtEnd() and self.peek().isalpha():
@@ -120,25 +138,42 @@ class Lexer():
     def notAtEnd(self) -> bool:
         return self.char < len(self.source)
     
-    def error(self, problem):
-        print(f"Error! {problem}")
-        return
+# Parser
+
+class Parser():
+    def __init__(self, lines) -> None:
+        pass
 
 # Main function
 
 def main() -> None:
     # Get the source
 
-    source = '+24 -19\n1 + 3 + 0'
+    source: str = '+24 -19\n1 + 3 + 0'
+
+    # Run the file/command
+
+    run(source)
+
+def run(src: str) -> None:
+    global hadError
 
     # Lexer
 
-    lexer = Lexer(source)
-    lines = lexer.scan()
+    lexer: Lexer = Lexer(src)
+    lines: list[list] = lexer.scan()
 
-    # Stuff after the lexer
+    # Parser
 
-    print(lines)
+    parser: Parser = Parser(lines)
+
+    statements = lines # placeholder
+
+    if hadError or statements == None: return
+
+    # Interpreter
+
+    print(statements) # placeholder
 
 if __name__ == "__main__":
     main()
